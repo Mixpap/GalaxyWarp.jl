@@ -271,3 +271,83 @@ function cloud_geometry(disks::Disks,clouds::Clouds,P;merged=true,dV0=300.0,τ=n
     clouds.dTp=dT
 	#return Geometry(sqrt.(X .^2.0 .+Y .^2.0 .+Z .^2.0), sqrt.(X .^2.0 .+Y .^2.0 ),PA,I,M,X,Y,V,VC,dV,Z,atan.(Y,X),dT,Tnet)
 end
+
+
+function manipulate_cube(ix::Int64,x::Float64,iy::Int64,y::Float64,cube::Array{Float64, 3},model_cube::Array{Float64, 3},data::Dict{String, Any},disks::Disks,search_v::Float64,Sd::Function,Sdpars::Vector{Float64},Rd::Vector{Float64},dR::Float64,lowest_sig::Float64)
+    for (rd,i_d,phi_d,V_d) in zip(disks.R,disks.I,disks.PA,disks.V)
+        d,xy_ellipse=distf(rd, i_d, phi_d, [x,y])
+        if d<=dR
+            phi_ell=atan(y,x)#xy_ellipse[2],xy_ellipse[1])
+            Vd_sky=V_d*sin(i_d)*sin(phi_ell-phi_d)/sqrt(1.0 +tan(i_d)^2.0*cos(phi_ell-phi_d)^2.0)
+            loc=abs.(Vd_sky.-data["V"]) .<search_v
+            if any(loc)
+                lsic=cube[ix,iy,:]
+                local_sig=lsic[loc]
+                Vlocal=data["V"][loc]
+                Fdata=maximum(local_sig)
+                Vmax=Vlocal[argmax(local_sig)]
+                if Fdata > lowest_sig*data["rms"]
+                    msig=Fdata .*exp.(-(data["V"] .-Vmax) .^2.0 ./(2.0*Sd(rd,Sdpars...)^2.0))
+                    model_cube[ix,iy,:]+=msig
+                    cube[ix,iy,:] -=msig
+                end
+            end
+        end
+    end
+    return cube,model_cube
+end
+
+function create_model_cube(data::Dict{String, Any}, IX::Vector{Int64}, XX::Vector{Float64},IY::Vector{Int64},YY::Vector{Float64},Sd::Function,Sdpars::Vector{Float64},Rd::Vector{Float64},dR::Float64,disks::Disks;search_v=1,beam=nothing,lowest_sig=3.0)::Array{Float64, 3}
+	cube=copy(data["data"])
+	model_cube=fill(0.0,size(cube))
+	Threads.@threads for n in 1:length(IX)
+		ix=IX[n]
+		x=XX[n]
+		iy=IY[n]
+		y=YY[n]
+        cube,model_cube=manipulate_cube(ix,x,iy,y,cube,model_cube,data,disks,search_v,Sd,Sdpars,Rd,dR,lowest_sig)
+	end
+	if ~isnothing(beam)
+		for iv in eachindex(data["V"])
+			model_cube[:,:,iv]=imfilter(model_cube[:,:,iv],beam)
+		end
+	end
+	return model_cube
+end
+
+# function create_model_cube(data::Dict{String, Any}, IX::Vector{Int64}, XX::Vector{Float64},IY::Vector{Int64},YY::Vector{Float64},Sd::Function,Sdpars::Vector{Float64},Rd::Vector{Float64},dR::Float64,disks::Disks;search_v=1,beam=nothing,lowest_sig=3.0)::Array{Float64, 3}
+# 	cube=copy(data["data"])
+# 	model_cube=fill(0.0,size(cube))
+# 	@progress for n in 1:length(IX)
+# 		ix=IX[n]
+# 		x=XX[n]
+# 		iy=IY[n]
+# 		y=YY[n]
+# 		for (rd,i_d,phi_d,V_d) in zip(disks.R,disks.I,disks.PA,disks.V)
+# 			d,xy_ellipse=distf(rd, i_d, phi_d, [x,y])
+# 			if d<=dR
+# 				phi_ell=atan(y,x)#xy_ellipse[2],xy_ellipse[1])
+# 				Vd_sky=V_d*sin(i_d)*sin(phi_ell-phi_d)/sqrt(1.0 +tan(i_d)^2.0*cos(phi_ell-phi_d)^2.0)
+# 				loc=abs.(Vd_sky.-data["V"]) .<search_v
+# 				if any(loc)
+# 					lsic=cube[ix,iy,:]
+# 					local_sig=lsic[loc]
+# 					Vlocal=data["V"][loc]
+# 					Fdata=maximum(local_sig)
+# 					Vmax=Vlocal[argmax(local_sig)]
+# 					if Fdata > lowest_sig*data["rms"]
+# 						msig=Fdata .*exp.(-(data["V"] .-Vmax) .^2.0 ./(2.0*Sd(rd,Sdpars...)^2.0))
+# 						model_cube[ix,iy,:]+=msig
+# 						cube[ix,iy,:] -=msig
+# 					end
+# 				end
+# 			end
+# 		end
+# 	end
+# 	if ~isnothing(beam)
+# 		for iv in eachindex(data["V"])
+# 			model_cube[:,:,iv]=imfilter(model_cube[:,:,iv],beam)
+# 		end
+# 	end
+# 	return model_cube
+# end
