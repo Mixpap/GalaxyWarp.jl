@@ -261,5 +261,13 @@ function cloud_geometry(disks::Disks,clouds::Clouds,P;merged=true,dV0=300.0,τ=n
 		dT[k]=κ6
 		Tnet[k]=κ7
     end
-	return Geometry(sqrt.(X .^2.0 .+Y .^2.0 .+Z .^2.0), sqrt.(X .^2.0 .+Y .^2.0 ),PA,I,M,X,Y,V,VC,dV,Z,atan.(Y,X),dT,Tnet)
+
+    clouds.rp=sqrt.(X .^2.0 .+Y .^2.0 )
+    clouds.Rp=sqrt.(X .^2.0 .+Y .^2.0 .+Z .^2.0)
+    clouds.Φp=atan.(Y,X)
+    clouds.Zp=Z
+    clouds.ip=I
+    clouds.pap=PA
+    clouds.dTp=dT
+	#return Geometry(sqrt.(X .^2.0 .+Y .^2.0 .+Z .^2.0), sqrt.(X .^2.0 .+Y .^2.0 ),PA,I,M,X,Y,V,VC,dV,Z,atan.(Y,X),dT,Tnet)
 end

@@ -17,6 +17,17 @@
     Sc::Vector{Float64}=[]
     Ic::Vector{Float64}=[]
     merge_parameters::Dict{String, <:Any}=Dict{String, Any}()
+
+    rp::Vector{Float64}=[]
+    Rp::Vector{Float64}=[]
+    Φp::Vector{Float64}=[]
+    Vcp::Vector{Float64}=[]
+    Zp::Vector{Float64}=[]
+    ip::Vector{Float64}=[]
+    pap::Vector{Float64}=[]
+    dTp::Vector{Float64}=[]
+    ϕ::Vector{Float64}=[]
+    tiltp::Vector{Float64}=[]
 end
 
 """ 
