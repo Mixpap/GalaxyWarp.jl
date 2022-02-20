@@ -1,6 +1,6 @@
 function Gaussian2DKernel(sx::Float64,sy::Float64,t::Float64)::Matrix{Float64}
 	a=cos(t)^2.0/(2.0*sx^2.0)+sin(t)^2.0/(2.0*sy^2.0)
-	b=sin(2.0*t)/(2.0*sx^2.0)+sin(2.0*t)/(2.0*sy^2.0)
+	b=sin(2.0*t)/(2.0*sx^2.0)-sin(2.0*t)/(2.0*sy^2.0)
 	c=sin(t)^2.0/(2.0*sx^2.0)+cos(t)^2.0/(2.0*sy^2.0)
 	A=1.0/(2.0*pi*sx*sy)
 	L=4.0*max(sx,sy)
@@ -63,7 +63,7 @@ function load_cube(cube_fits,name;z=0.0,rms=0.0,centerx="median",centery="median
     dx=diff(xx)[1]
     b1=round(beamr[1]/dx /2.35)
 	b2=round(beamr[2]/dx /2.35)
-	b_pa_rad=deg2rad(beamr[3])
+	b_pa_rad=deg2rad(beamr[3]+90.0) #correction for north
 	psf= Gaussian2DKernel(b1,b2,b_pa_rad);
 
     # TODO: check if cube is already in velocities
