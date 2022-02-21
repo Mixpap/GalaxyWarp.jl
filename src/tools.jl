@@ -66,7 +66,6 @@ function load_cube(cube_fits,name;z=0.0,rms=0.0,centerx="median",centery="median
 	b_pa_rad=deg2rad(beamr[3]+90.0) #correction for north
 	psf= Gaussian2DKernel(b1,b2,b_pa_rad);
 
-    # TODO: check if cube is already in velocities
     if zaxis == "freq"
         dnu=header["CDELT3"]u"Hz"
         b_nu=header["CRVAL3"]u"Hz"-header["CRPIX3"]*dnu

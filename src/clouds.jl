@@ -18,16 +18,17 @@
     Ic::Vector{Float64}=[]
     merge_parameters::Dict{String, <:Any}=Dict{String, Any}()
 
-    rp::Vector{Float64}=[]
-    Rp::Vector{Float64}=[]
-    Φp::Vector{Float64}=[]
-    Vcp::Vector{Float64}=[]
-    Zp::Vector{Float64}=[]
-    ip::Vector{Float64}=[]
-    pap::Vector{Float64}=[]
-    dTp::Vector{Float64}=[]
+    r::Vector{Float64}=[]
+    R::Vector{Float64}=[]
+    Φ::Vector{Float64}=[]
+    VC::Vector{Float64}=[]
+    dV::Vector{Float64}=[]
+    Z::Vector{Float64}=[]
+    inc::Vector{Float64}=[]
+    pa::Vector{Float64}=[]
+    dT::Vector{Float64}=[]
     ϕ::Vector{Float64}=[]
-    tiltp::Vector{Float64}=[]
+    tilt::Vector{Float64}=[]
 end
 
 """ 
@@ -468,129 +469,11 @@ function filter_clouds(clouds::Clouds,rect::Vector{Dict{String, Float64}};x0=-10
     mask= maskF .&& maskX .&& maskY .&& maskV .&& maskS
     maskc= maskFc .&& maskXc .&& maskYc .&& maskVc .&& maskSc
 
-    @info "Found $(sum(mask)) unique sub-clouds and $(sum(maskc))"
+    @info "Found $(sum(mask)) unique sub-clouds and $(sum(maskc)) merged clouds"
 
-    Clouds(clouds.Xp[mask],clouds.Yp[mask],clouds.Vp[mask],clouds.Fp[mask],clouds.Sp[mask],clouds.Ip[mask],clouds.fit_parameters,[],[],clouds.Xc[maskc],clouds.Yc[maskc],clouds.Vc[maskc],clouds.Fc[maskc],clouds.Sc[maskc],clouds.Ic[maskc],clouds.merge_parameters)
-end
-include("vizualization.jl")
-
-function cloud_fitting_diagnostics(data,clouds::Clouds,savename;sigma=4.0,pvds=[0.0,90.0])
-    mom0_data = sum(data["data"] .> sigma*data["rms"], dims = 3)[:, :, 1];
-
-    Xp=clouds.Xp
-    Yp=clouds.Yp
-    Vp=clouds.Vp
-    Ip=clouds.Ip
-    Sp=clouds.Sp
-    Rp=sqrt.(Xp .^2 .+ Yp .^2)
-    Φp=atan.(Yp,Xp)
-
-    figd=Figure(resolution = (1500,700))
-    axRc= Axis(figd[1,1],Aspect=:equal)
-    axxy= Axis(figd[1,2],Aspect=:equal)
-    axS= Axis(figd[1,3],Aspect=:equal)
-    
-    heatmap!(axxy,data["X"],data["Y"],mom0_data)
-    lines!(axRc,Rp[sortperm(Rp)],log10.(cumsum(Ip[sortperm(Rp)])))
-    scatter!(axxy,Xp,Yp,color=Vp,colorrange=[-300.0,300.0],colormap=:seismic,markersize=3,trasnparency=true)
-    
-    scatter!(axS,Rp,Sp,markersize=2,trasnparency=true)
-    if length(clouds.Xc)<1
-        save("$(savename)_fit.png",figd)
+    if length(clouds.r)>1
+        return Clouds(clouds.Xp[mask],clouds.Yp[mask],clouds.Vp[mask],clouds.Fp[mask],clouds.Sp[mask],clouds.Ip[mask],clouds.fit_parameters,[],[],clouds.Xc[maskc],clouds.Yc[maskc],clouds.Vc[maskc],clouds.Fc[maskc],clouds.Sc[maskc],clouds.Ic[maskc],clouds.merge_parameters,clouds.r[mask],clouds.R[mask],clouds.Φ[mask],clouds.VC[mask],clouds.Z[mask],clouds.inc[mask],clouds.pa[mask],clouds.dT[mask],clouds.ϕ[mask],clouds.tilt[mask])
+    else
+        return Clouds(clouds.Xp[mask],clouds.Yp[mask],clouds.Vp[mask],clouds.Fp[mask],clouds.Sp[mask],clouds.Ip[mask],clouds.fit_parameters,[],[],clouds.Xc[maskc],clouds.Yc[maskc],clouds.Vc[maskc],clouds.Fc[maskc],clouds.Sc[maskc],clouds.Ic[maskc],clouds.merge_parameters,[],[],[],[],[],[],[],[],[],[],[])
     end
-    # for pvd in pvds
-    #     save("$(savename)_pvd_$(pvd).png",plot_pvd(data,pvd;clouds=clouds,merged=false))
-    # end
-
-    if length(clouds.Xc)>1
-        Xc=clouds.Xc
-        Yc=clouds.Yc
-        Vc=clouds.Vc
-        Ic=clouds.Ic
-        Sc=clouds.Sc
-        Rc=sqrt.(Xc .^2 .+ Yc .^2)
-        Φc=atan.(Yc,Xc)
-
-        lines!(axRc,Rc[sortperm(Rc)],log10.(cumsum(Ic[sortperm(Rc)])))
-        #scatter!(axxy,Xc,Yc,color=Vc,colorrange=[-300.0,300.0],colormap=:seismic,markersize=10,trasnparency=true)
-        
-        scatter!(axS,Rc,Sc,markersize=10,trasnparency=true)
-        save("$(savename)_fit.png",figd)
-        slit=0.1
-
-        figd=Figure(resolution = (1500,700))
-        axxy1= Axis(figd[1,1],Aspect=:equal)
-        axxy= Axis(figd[1,2],Aspect=:equal)
-        scatter!(axxy1,Xc,Yc,color=Vc,colorrange=[-300.0,300.0],colormap=:seismic,markersize=10,trasnparency=true)
-        for (n,i) in enumerate(unique(clouds.I))
-            color=Cycled(n)
-            xx=Xp[clouds.belongs .== i]
-            yy=Yp[clouds.belongs .== i]
-            scatter!(axxy,xx,yy,color=color,markersize=8)
-        end
-        scatter!(axxy,Xc,Yc,color=:black,marker='X',markersize=12)
-        save("$(savename)_merging.png",figd)
-
-        for pvdi in pvds
-            θ=deg2rad(pvdi)
-            figpvf=Figure(resolution=(1.9*1000,1050))
-            axpvf=Axis(figpvf[1,1], xlabel=L"Projected radius [$\mathrm{kpc}$]",ylabel=L"Projected Velocity [$\mathrm{km\,s^{-1}}$]", labelsize=20)
-            contourf!(axpvf, data["Y"], data["V"], pvd(pvdi,data;slit=slit), levels=collect(2:2:20), colormap=:roma,extendhigh=:red)
- 
-            for (n,i) in enumerate(unique(clouds.I))
-                color=Cycled(n)
-                xx=Xp[clouds.belongs .== i]
-                yy=Yp[clouds.belongs .== i]
-                vv=Vp[clouds.belongs .== i]
-
-                rc=sqrt.(xx .^2.0 .+ yy .^2.0)
-                phic=atan.(yy,xx)
-                rr_p=F(θ,xx,yy,rc;slit=slit).* (-sign.(cos.(F(θ,xx,yy,phic;slit=slit) .- (θ-pi/2.0))))
-
-                vv_p=F(θ,xx,yy,vv;slit=slit)
-
-                scatter!(axpvf,rr_p,vv_p,color=color,markersize=3,transparency=true)
-
-                xx=[Xp[i]]
-                yy=[Yp[i]]
-                vv=[Vp[i]]
-                rc=sqrt.(xx .^2.0 .+ yy .^2.0)
-                phic=atan.(yy,xx)
-                rr_p=F(θ,xx,yy,rc;slit=slit).* (-sign.(cos.(F(θ,xx,yy,phic;slit=slit) .- (θ-pi/2.0))))
-
-                vv_p=F(θ,xx,yy,vv;slit=slit)
-
-                scatter!(axpvf,rr_p,vv_p,color=:black,marker=:rect,markersize=13,transparency=true)
-            end
-            xx=Xp
-            yy=Yp
-            vv=Vp
-            rc=sqrt.(xx .^2.0 .+ yy .^2.0)
-            phic=atan.(yy,xx)
-            rr_p=F(θ,xx,yy,rc;slit=slit).* (-sign.(cos.(F(θ,xx,yy,phic;slit=slit) .- (θ-pi/2.0))))
-
-            vv_p=F(θ,xx,yy,vv;slit=slit)
-
-            scatter!(axpvf,rr_p,vv_p,color=:black,marker=:rect,markersize=2,transparency=true)
-
-            #scatter!(axpvf,F(θ,Xc,Yc,Rc;slit=slit).* (-sign.(cos.(F(θ,Xc,Yc,Φc;slit=slit) .- (θ-pi/2.0)))),F(θ,Xc,Yc,Vc;slit=slit),color=:black,marker='X',markersize=12)
-
-            save("$(savename)_pvd_$(pvdi)_merged.png",figpvf)
-        end
-
-        # figb=Figure(resolution = (2000,1000))
-        # axxyb= Axis(figb[1,1],Aspect=:equal)
-        # axyvb = Axis(figb[1,2],Aspect=:equal)
-        # scatter!(axxyb,Xp,Yp,color=clouds.belongs,makersize=7)
-        # scatter!(axyvb,Yp,Vp,color=clouds.belongs,makersize=7)
-        # for (n,i) in enumerate(clouds.I)
-        #     scatter!(axxyb,[Xp[i]],[Yp[i]],color=:red,marker="$(n%9)",markersize=15)
-        #     scatter!(axyvb,[Yp[i]],[Vp[i]],color=:red,marker="$(n%9)",markersize=15)
-        # end
-        # save("$(savename)_fit_merging.png",figb)
-    end
-end
-
-function save_clouds(clouds::Clouds,filename)
-    
 end

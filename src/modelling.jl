@@ -5,22 +5,22 @@ struct Disks
 	V::Vector{Float64}
 end
 
-struct Geometry
-	R::Vector{Float64}
-	Rs::Vector{Float64}
-	PA::Vector{Float64}
-	I::Vector{Float64}
-	M::Vector{Float64}
-	X::Vector{Float64}
-	Y::Vector{Float64}
-	V::Vector{Float64}
-	VC::Vector{Float64}
-	dV::Vector{Float64}
-	Z::Vector{Float64}
-	Φ::Vector{Float64}
-	dT::Vector{Float64}
-	T::Vector{Float64}
-end
+# struct Geometry
+# 	R::Vector{Float64}
+# 	Rs::Vector{Float64}
+# 	PA::Vector{Float64}
+# 	I::Vector{Float64}
+# 	M::Vector{Float64}
+# 	X::Vector{Float64}
+# 	Y::Vector{Float64}
+# 	V::Vector{Float64}
+# 	VC::Vector{Float64}
+# 	dV::Vector{Float64}
+# 	Z::Vector{Float64}
+# 	Φ::Vector{Float64}
+# 	dT::Vector{Float64}
+# 	T::Vector{Float64}
+# end
 
 """
 Rotation Matrix
@@ -224,19 +224,13 @@ function cloud_properties(x::Float64,y::Float64,v::Float64,disks::Disks,dR::Floa
 	end
 end
 
-function cloud_geometry(disks::Disks,clouds::Clouds,P;merged=true,dV0=300.0,τ=nothing)#::Geometry
+function cloud_geometry!(clouds::Clouds,disks::Disks,P;dV0=300.0,τ=nothing)#::Geometry
 
-    if merged
-        X=clouds.Xc
-        Y=clouds.Yc
-        V=clouds.Vc
-        M=clouds.Ic
-    else
-        X=clouds.Xp
-        Y=clouds.Yp
-        V=clouds.Vp
-        M=clouds.Ip
-    end
+    X=clouds.Xp
+    Y=clouds.Yp
+    V=clouds.Vp
+    M=clouds.Ip
+    
 	VC=fill(NaN,length(X))
     Z=fill(NaN,length(X))
 	K=fill(NaN,length(X))
@@ -262,13 +256,14 @@ function cloud_geometry(disks::Disks,clouds::Clouds,P;merged=true,dV0=300.0,τ=n
 		Tnet[k]=κ7
     end
 
-    clouds.rp=sqrt.(X .^2.0 .+Y .^2.0 )
-    clouds.Rp=sqrt.(X .^2.0 .+Y .^2.0 .+Z .^2.0)
-    clouds.Φp=atan.(Y,X)
-    clouds.Zp=Z
-    clouds.ip=I
-    clouds.pap=PA
-    clouds.dTp=dT
+    clouds.r=sqrt.(X .^2.0 .+Y .^2.0 )
+    clouds.R=sqrt.(X .^2.0 .+Y .^2.0 .+Z .^2.0)
+    clouds.Φ=atan.(Y,X)
+    clouds.Z=Z
+    clouds.inc=I
+    clouds.pa=PA
+    clouds.dT=dT
+    clouds.dV=dV
 	#return Geometry(sqrt.(X .^2.0 .+Y .^2.0 .+Z .^2.0), sqrt.(X .^2.0 .+Y .^2.0 ),PA,I,M,X,Y,V,VC,dV,Z,atan.(Y,X),dT,Tnet)
 end
 

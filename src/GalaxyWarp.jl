@@ -22,12 +22,12 @@ module GalaxyWarp
     using ProgressLogging
     #using BenchmarkTools
     using ImageFiltering
-
-    include("vizualization.jl")
-    include("tools.jl")
+   
     include("clouds.jl")
     include("modelling.jl")
+    include("tools.jl")
     include("simulate.jl")
+    include("vizualization.jl")
     
     
 
