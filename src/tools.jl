@@ -75,20 +75,26 @@ function load_cube(cube_fits,name;z=0.0,rms=0.0,centerx="median",centery="median
         v =((line_rest^2.0 .- nu .^ 2.0) ./ (line_rest^2.0 .+ nu .^ 2.0) .*c_0)#u"km" / u"s"
         v=v .|> u"km"/u"s"
         vv=[ustrip(vi) for vi ∈ v]
-    elseif zaxis == "vel"
+    elseif (zaxis == "vel")
         Nv = header["NAXIS3"]
         dv = abs(header["CDELT3"])
         b_v =header["CRVAL3"]-header["CRPIX3"]*dv
         v=LinRange(b_v+dv,b_v+dv*Nv,Nv)
         v=v.-vel_rest
+        #if !(header["CUNIT3"]=="km/s")
         vv=v ./ 1000.0
+        #else
+        #    vv=v
+        #end
+    else 
+        @error "Cannot understand the z coordinate"
     end
     #masking
     fv=findall(x -> (x .> v0) .& (x .< v1), vv)
     fx=findall(x -> (x .> x0) .& (x .< x1), xx)
     fy=findall(x -> (x .> y0) .& (x .< y1), yy)
 
-    return Dict("name"=>name,"X"=>xx[fx],"Y"=>yy[fy],"V"=>vv[fv],"dx"=>diff(xx)[1],"dv"=>diff(vv)[1],"data"=>Float64.(data[fx,fy,fv]),"rms"=>rms,"beam"=>beamr,"BEAM"=>psf)
+    return Dict("name"=>name,"X"=>xx[fx],"Y"=>yy[fy],"V"=>vv[fv],"dx"=>diff(xx)[1],"dv"=>diff(vv)[1],"data"=>Float64.(data[fx,fy,fv]),"rms"=>rms,"beam"=>beamr,"BEAM"=>psf,"header"=>header)
 end
 
 

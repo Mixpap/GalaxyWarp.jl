@@ -1,3 +1,71 @@
+
+function moments(data,rx,ry;x0=-2.2,x1=2.2,y0=-4.5,y1=4.5,v0=-400.0,v1=400.0,dx=1.0,dv=20.0,vmax=80.0,denoise=4.0,show_beam=true)
+	figmom=Figure(resolution = (rx,ry))
+    fv=findall(x -> (x .> v0) .& (x .< v1), data["V"])
+    fx=findall(x -> (x .> x0) .& (x .< x1), data["X"])
+    fy=findall(x -> (x .> y0) .& (x .< y1), data["Y"])
+
+    cube=data["data"][fx,fy,fv]
+	#cube=filter(!isnan, cube)
+    cube[cube .< (denoise * data["rms"])] .= 0.0
+    X=data["X"][fx]
+    Y=data["Y"][fy]
+    V=data["V"][fv]
+
+    axmom0= Axis(figmom[2,1])
+    axmom0.xticks = collect(-10:dx:10)
+    axmom0.yticks = collect(-10:dx:10)
+    axmom0.aspect=DataAspect()
+    mom0=sum(cube,dims=3)[:,:,1]
+    mom0[mom0 .== 0] .= NaN
+    hm=heatmap!(axmom0,X,Y,mom0)
+    Colorbar(figmom[1, 1], hm, vertical = false,label=L"Flux $[\mathrm{Jy\,km\,s^{1}\,beam^{-1}}]$")
+    axmom0.xlabel="X [kpc]"
+    axmom0.ylabel="Y [kpc]"
+
+    axmom1= Axis(figmom[2,2])
+    axmom1.xticks = collect(-10:dx:10)
+    axmom1.yticks = collect(-10:dx:10)
+    axmom1.aspect=DataAspect()
+    mom0=sum(cube,dims=3)[:,:,1]
+    mom1=[sum(V .* cube[ix,iy,:]) for ix in 1:size(cube,1), iy in 1:size(cube,2)] ./mom0
+    hm=heatmap!(axmom1,X,Y,mom1,colorrange=[v0,v1],colormap=:seismic)
+    cb=Colorbar(figmom[1, 2], hm, vertical = false,label=L"Mean Velocity $[\mathrm{km\,s^{1}}]$")
+    cb.ticks = (v0:100:v1)
+    axmom1.xlabel="X [kpc]"
+    axmom1.ylabel="Y [kpc]"
+
+    axmom2= Axis(figmom[2,3])
+    axmom2.xticks = collect(-10:dx:10)
+    axmom2.yticks = collect(-10:dx:10)
+    axmom2.aspect=DataAspect()
+    mom0=sum(cube,dims=3)[:,:,1]
+    mom1=[sum(V .* cube[ix,iy,:]) for ix in 1:size(cube,1), iy in 1:size(cube,2)] ./mom0
+    mom2=sqrt.([sum((V .- mom1[ix,iy]) .^2.0 .* cube[ix,iy,:]) for ix in 1:size(cube,1), iy in 1:size(cube,2)] ./mom0)
+    hm=heatmap!(axmom2,X,Y,mom2,colorrange=[0.0,vmax])#,colormap=:seismic)
+    cb=Colorbar(figmom[1, 3], hm, vertical = false,label=L"Velocity Dispersion $[\mathrm{km\,s^{1}}]$")
+    cb.ticks = (0.0:20.0:vmax)
+    axmom2.xlabel="X [kpc]"
+    axmom2.ylabel="Y [kpc]"
+    #rowsize!(figmom.layout, 1, 0.95*axmom2.scene.px_area[].widths[2])
+	#colsize!(figmom.layout, 1, 0.95*axmom2.scene.px_area[].widths[1])
+	if show_beam
+		phis_beam=0.0:0.01:2*pi
+		major_beam=maximum(data["beam"][1:2])/2.0
+		minor_beam=minimum(data["beam"][1:2])/2.0
+		X_beam=0.6
+		Y_beam=0.25
+		i_beam=acos(minor_beam/major_beam)
+		pa_beam=deg2rad(data["beam"][3])
+		R_beam=major_beam ./(1.0 .+tan.(i_beam)^2.0 .* cos.(phis_beam .-pa_beam).^2.0).^0.5
+		x_beam=R_beam .*cos.(phis_beam) .+0.8 *x1
+		y_beam=R_beam .*sin.(phis_beam) .+ (y0+abs(0.1*y0))
+		lines!(axmom0,x_beam,y_beam, label=false, transparency = true,linewith=4.0, color=:blue)
+	end
+
+    return figmom
+end
+
 function plot_pvd(data,ang;cdata=nothing,clouds=nothing,disks=nothing,merged=false,slit=0.1,zoom_pvd=[-4.1,4.1,-370.0,370.0,1.0,50.0,150.0])
     θ=deg2rad(ang)
     ϕ=θ+pi/2
@@ -165,7 +233,7 @@ function plot_cube_model(data,model;disks=nothing,zoom_image=[-2.0,2.0,-5.0,5.0,
     figd
 end
 
-function cloud_fitting_diagnostics(data,clouds::Clouds,savename;sigma=4.0,pvds=[0.0,90.0])
+function cloud_fitting_diagnostics(data,clouds::Clouds,savename;sigma=4.0,pvds=[0.0,90.0],slit=0.1)
     mom0_data = sum(data["data"] .> sigma*data["rms"], dims = 3)[:, :, 1];
 
     Xp=clouds.Xp
@@ -207,7 +275,7 @@ function cloud_fitting_diagnostics(data,clouds::Clouds,savename;sigma=4.0,pvds=[
         
         scatter!(axS,Rc,Sc,markersize=10,trasnparency=true)
         save("$(savename)_fit.png",figd)
-        slit=0.1
+        
 
         figd=Figure(resolution = (1500,700))
         axxy1= Axis(figd[1,1],Aspect=:equal)

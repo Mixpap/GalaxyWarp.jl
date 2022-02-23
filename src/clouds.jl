@@ -5,7 +5,7 @@
     Fp::Vector{Float64}
     Sp::Vector{Float64}
     Ip::Vector{Float64}
-    fit_parameters::Dict{String, <:Any}
+    logs::Dict{String, <:Any}
 
     belongs::Vector{Int64}=[]
     I::Vector{Int64}=[]
@@ -16,7 +16,6 @@
     Fc::Vector{Float64}=[]
     Sc::Vector{Float64}=[]
     Ic::Vector{Float64}=[]
-    merge_parameters::Dict{String, <:Any}=Dict{String, Any}()
 
     r::Vector{Float64}=[]
     R::Vector{Float64}=[]
@@ -27,6 +26,7 @@
     inc::Vector{Float64}=[]
     pa::Vector{Float64}=[]
     dT::Vector{Float64}=[]
+    Tnet::Vector{Float64}=[]
     ϕ::Vector{Float64}=[]
     tilt::Vector{Float64}=[]
 end
@@ -270,7 +270,7 @@ function fit_pixelst(data::Dict{String, Any};x0=-2.0,x1=2.0,y0=-5.0,y1=5.0, sigm
             end
         end
     end
-    @info "Found $(length(fit_results)) subpixel clouds, dont forget to save them through save_clouds(clouds,filename)"
+    @info "Found $(length(fit_results)) subpixel clouds, dont forget to save them."
     cdp=Dict{String, Any}("svmax"=>svmax,"svmin"=>svmin,"x0"=>x0,"x1"=>x1,"y0"=>y0,"y1"=>y1,"vmin"=>vmin,"vmax"=>vmax,"sigma"=>sigma,"ncrit"=>ncrit,"maxsteps"=>maxsteps,"popsize"=>popsize,"N0"=>N0,"Nmax"=>Nmax)
 
 	Xp=fill(NaN,length(fit_results))
@@ -292,7 +292,7 @@ function fit_pixelst(data::Dict{String, Any};x0=-2.0,x1=2.0,y0=-5.0,y1=5.0, sigm
 		end
 	end
     
-    return Clouds(Xp=Xp,Yp=Yp,Vp=Vp,Fp=Fp,Sp=Sp,Ip=Ip,fit_parameters=cdp)
+    return Clouds(Xp=Xp,Yp=Yp,Vp=Vp,Fp=Fp,Sp=Sp,Ip=Ip,logs=cdp)
 end
 
 # function merge_pixel_clouds(X,Y,V,A;dx=0.1,dy=0.1,dv=30.0)
@@ -417,11 +417,11 @@ function merge_pixel_clouds!(clouds::Clouds;dr=0.1,dv=30.0,mp=4,df=5000.0,roll_d
     setfield!(clouds, :Vc, V[I])
     setfield!(clouds, :Fc, F[I])
     setfield!(clouds, :Ic, sIc)
-    setfield!(clouds, :merge_parameters, Dict{String, Any}("dr"=>dr,"dv"=>dv,"mp"=>mp,"df"=>df,"roll_d"=>roll_d,"max_d"=>max_d))
+    setfield!(clouds, :logs, merge(clouds.logs,Dict{String, Any}("dr"=>dr,"dv"=>dv,"mp"=>mp,"df"=>df,"roll_d"=>roll_d,"max_d"=>max_d)))
 end
 
 
-function filter_clouds(clouds::Clouds,rect::Vector{Dict{String, Float64}};x0=-10.0,x1=10.0,y0=-10.0,y1=10.0,v0=-1000.0,v1=1000.0,s0=0.0,s1=500.0,f0=0.0,f1=100.0)
+function filter_clouds(clouds::Clouds,rect::Vector{Dict{String, Float64}};x0=-10.0,x1=10.0,y0=-10.0,y1=10.0,v0=-1000.0,v1=1000.0,s0=0.0,s1=500.0,f0=0.0,f1=100.0,dv=0.0)
 
     @info "Filtering clouds"
     maskF=clouds.Xp .>1000.0
@@ -458,6 +458,10 @@ function filter_clouds(clouds::Clouds,rect::Vector{Dict{String, Float64}};x0=-10
         maskV=maskV .|| (clouds.Vp .>v0i) .&& (clouds.Vp .<v1i)
         maskS=maskS .|| (clouds.Sp .>s0i) .&& (clouds.Sp .<s1i)
         
+        if length(clouds.r)>0
+            dvi = haskey(rd,"dv") ? rd["dv"] : dv
+            maskF=maskF .|| (abs.(clouds.dV) .>dvi) 
+        end
 
         maskFc=maskFc .|| (clouds.Fc .>f0i) .&& (clouds.Fc .<f1i)
         maskXc=maskXc .|| (clouds.Xc .>x0i) .&& (clouds.Xc .<x1i)
@@ -471,9 +475,12 @@ function filter_clouds(clouds::Clouds,rect::Vector{Dict{String, Float64}};x0=-10
 
     @info "Found $(sum(mask)) unique sub-clouds and $(sum(maskc)) merged clouds"
 
-    if length(clouds.r)>1
-        return Clouds(clouds.Xp[mask],clouds.Yp[mask],clouds.Vp[mask],clouds.Fp[mask],clouds.Sp[mask],clouds.Ip[mask],clouds.fit_parameters,[],[],clouds.Xc[maskc],clouds.Yc[maskc],clouds.Vc[maskc],clouds.Fc[maskc],clouds.Sc[maskc],clouds.Ic[maskc],clouds.merge_parameters,clouds.r[mask],clouds.R[mask],clouds.Φ[mask],clouds.VC[mask],clouds.Z[mask],clouds.inc[mask],clouds.pa[mask],clouds.dT[mask],clouds.ϕ[mask],clouds.tilt[mask])
+
+    if length(clouds.r)>0 && length(clouds.ϕ)>0
+        return Clouds(Xp=clouds.Xp[mask],Yp=clouds.Yp[mask],Vp=clouds.Vp[mask],Fp=clouds.Fp[mask],Sp=clouds.Sp[mask],Ip=clouds.Ip[mask],logs=merge(clouds.logs,Dict{String, Any}("filtered"=>true)),belongs=clouds.belongs[mask],I=clouds.I[maskc],Xc=clouds.Xc[maskc],Yc=clouds.Yc[maskc],Vc=clouds.Vc[maskc],Fc=clouds.Fc[maskc],Sc=clouds.Sc[maskc],Ic=clouds.Ic[maskc],r=clouds.r[mask],R=clouds.R[mask],Φ=clouds.Φ[mask],VC=clouds.VC[mask],dV=clouds.dV[mask],Z=clouds.Z[mask],inc=clouds.inc[mask],pa=clouds.pa[mask],dT=clouds.dT[mask],Tnet=clouds.Tnet[mask],ϕ=clouds.ϕ[mask],tilt=clouds.tilt[mask])
+    elseif length(clouds.r)>0
+        return Clouds(Xp=clouds.Xp[mask],Yp=clouds.Yp[mask],Vp=clouds.Vp[mask],Fp=clouds.Fp[mask],Sp=clouds.Sp[mask],Ip=clouds.Ip[mask],logs=merge(clouds.logs,Dict{String, Any}("filtered"=>true)),belongs=clouds.belongs[mask],I=clouds.I[maskc],Xc=clouds.Xc[maskc],Yc=clouds.Yc[maskc],Vc=clouds.Vc[maskc],Fc=clouds.Fc[maskc],Sc=clouds.Sc[maskc],Ic=clouds.Ic[maskc],r=clouds.r[mask],R=clouds.R[mask],Φ=clouds.Φ[mask],VC=clouds.VC[mask],dV=clouds.dV[mask],Z=clouds.Z[mask],inc=clouds.inc[mask],pa=clouds.pa[mask],dT=clouds.dT[mask],Tnet=clouds.Tnet[mask])
     else
-        return Clouds(clouds.Xp[mask],clouds.Yp[mask],clouds.Vp[mask],clouds.Fp[mask],clouds.Sp[mask],clouds.Ip[mask],clouds.fit_parameters,[],[],clouds.Xc[maskc],clouds.Yc[maskc],clouds.Vc[maskc],clouds.Fc[maskc],clouds.Sc[maskc],clouds.Ic[maskc],clouds.merge_parameters,[],[],[],[],[],[],[],[],[],[],[])
+        return Clouds(Xp=clouds.Xp[mask],Yp=clouds.Yp[mask],Vp=clouds.Vp[mask],Fp=clouds.Fp[mask],Sp=clouds.Sp[mask],Ip=clouds.Ip[mask],logs=merge(clouds.logs,Dict{String, Any}("filtered"=>true)))
     end
 end

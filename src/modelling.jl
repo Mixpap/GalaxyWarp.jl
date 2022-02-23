@@ -230,7 +230,7 @@ function cloud_geometry!(clouds::Clouds,disks::Disks,P;dV0=300.0,τ=nothing)#::G
     Y=clouds.Yp
     V=clouds.Vp
     M=clouds.Ip
-    
+
 	VC=fill(NaN,length(X))
     Z=fill(NaN,length(X))
 	K=fill(NaN,length(X))
@@ -263,6 +263,8 @@ function cloud_geometry!(clouds::Clouds,disks::Disks,P;dV0=300.0,τ=nothing)#::G
     clouds.inc=I
     clouds.pa=PA
     clouds.dT=dT
+    clouds.Tnet=Tnet
+    clouds.VC=VC
     clouds.dV=dV
 	#return Geometry(sqrt.(X .^2.0 .+Y .^2.0 .+Z .^2.0), sqrt.(X .^2.0 .+Y .^2.0 ),PA,I,M,X,Y,V,VC,dV,Z,atan.(Y,X),dT,Tnet)
 end
