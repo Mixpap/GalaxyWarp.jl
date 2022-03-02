@@ -4,7 +4,7 @@ using Parameters
 using PCHIPInterpolation
 using Optim
 using BlackBoxOptim
-using GLMakie 
+using Makie 
 using Distributions: Normal
 
 @testset "1D Signal Fitting" begin

@@ -3,7 +3,7 @@ module GalaxyWarp
     using ColorSchemes
     using JLD2
     #using NPZ
-    using GLMakie
+    using Makie
     using Colors
     using Images: imrotate
     using Statistics: mean,median, std
