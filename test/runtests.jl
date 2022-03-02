@@ -100,10 +100,12 @@ end
 end
 
 @testset "Simulated data Fitting" begin
+    filename="$(@__DIR__)/simulated1/"
+    run(`mkdir -p $(filename)`)
     pixel_fit_steps=800
     kinematics_fittting_steps=5000
 
-    simdata=GalaxyWarp.sim_data("$(@__DIR__)/test";theta_dist="uniform", Vcirc = x-> 320.0*x/(x^2.0+1.5^2.0)^1.2,I=x->70.0,PA=x->6.0*x, Sb = x->100.0, sigma_inst=x->10.0, cloud_mass=1e5 ,xl=3.0,yl=5.0,vl=350.0,dx=0.05,dy=0.05,dv=20.0,beam=[0.08,0.07],Rmin=0.1,dR=0.1,Rmax = 4.5,a=0.01,rms=0.05,Rcmax=2.1,Rcmap=1.7,k=3)
+    @time simdata=GalaxyWarp.sim_data("simulated1";theta_dist="uniform", Vcirc = x-> 320.0*x/(x^2.0+1.5^2.0)^1.2,I=x->70.0,PA=x->6.0*x, Sb = x->100.0, sigma_inst=x->10.0, cloud_mass=1e5 ,xl=3.0,yl=5.0,vl=350.0,dx=0.05,dy=0.05,dv=20.0,beam=[0.08,0.07],Rmin=0.1,dR=0.1,Rmax = 4.5,a=0.01,rms=0.05,Rcmax=2.1,Rcmap=1.7,k=3)
 
     @test length(simdata["Xc"])>100000
     @test length(simdata["Yc"])==length(simdata["Xc"])
@@ -112,7 +114,7 @@ end
 
     clouds_sim=GalaxyWarp.fit_pixelst(simdata;x0=-5.0,x1=5.0,y0=-5.5,y1=5.5,sigma=3.0, ncrit=1,N0=1,Nmax=7,vmin=-400.0, vmax=400.0,svmin=15.0, svmax=32.0,maxsteps=pixel_fit_steps, popsize=16)
 
-    GalaxyWarp.cloud_fitting_diagnostics(simdata,clouds_sim,"$(@__DIR__)/test")
+    @time GalaxyWarp.cloud_fitting_diagnostics(simdata,clouds_sim,"$(filename)"*"test")
 
     lenX0=length(clouds_sim.Xp)
     @test lenX0>2000
@@ -133,8 +135,8 @@ end
     lenX1m=length(clouds_sim.Xc)
     @test lenX1m>10
     @test lenX1m<lenX1
-    @test length(clouds_sim.Vc)==lenX1m
     @test length(clouds_sim.Yc)==lenX1m
+    @test length(clouds_sim.Vc)==lenX1m
 
     clouds_sim_f2=GalaxyWarp.filter_clouds(clouds_sim,[Dict("x0"=>-1.0)])
     lenX1_2=length(clouds_sim_f2.Xp)
@@ -147,7 +149,7 @@ end
     @test length(clouds_sim_f2.Vc)==lenX1_2c
     @test length(clouds_sim_f2.Yc)==lenX1_2c 
 
-    GalaxyWarp.cloud_fitting_diagnostics(simdata,clouds_sim_f1,"$(@__DIR__)/test")
+    GalaxyWarp.cloud_fitting_diagnostics(simdata,clouds_sim_f1,"$(filename)"*"test")
 
     Pars=p_test()
     par0=copy([getfield(Pars,s) for s in Pars.Fit])
@@ -188,11 +190,11 @@ end
 	GalaxyWarp.cloud_geometry!(clouds_sim,disks,Pars)
 
     fsky=GalaxyWarp.plot_sky(clouds_sim,disks,msize=7)
-	save("$(@__DIR__)/sky.png",fsky)
+	save("$(filename)"*"sky.png",fsky)
 
     ## Filtering by dV
     clouds_sim_res=GalaxyWarp.filter_clouds(clouds_sim,[Dict("dv"=>10.0)])
-    GalaxyWarp.cloud_fitting_diagnostics(simdata,clouds_sim_res,"$(@__DIR__)/test_res")
+    GalaxyWarp.cloud_fitting_diagnostics(simdata,clouds_sim_res,"$(filename)"*"test_res")
 
     lenX1_3=length(clouds_sim_res.Xp)
     @test lenX1_3 < length(clouds_sim.Xp)
@@ -233,16 +235,16 @@ end
     disks_real = GalaxyWarp.make_disks(Pars.Rd,Pars)
 	GalaxyWarp.cloud_geometry!(clouds_sim,disks_real,Pars)
     fsky=GalaxyWarp.plot_sky(clouds_sim,disks,msize=7)
-	save("$(@__DIR__)/sky_real.png",fsky)
+	save("$(filename)"*"sky_real.png",fsky)
 
 	#GalaxyWarp.cloud_geometry!(clouds_sim,disks,Pars)
     
 	fdisks=GalaxyWarp.plot_disks(Dict("MAP"=>disks,"d0"=>disks0,"REAL"=>disks_real))
-	save("$(@__DIR__)/disks.png",fdisks)
+	save("$(filename)"*"disks.png",fdisks)
 
     for ang in [0.0,15.0,30.0]
 		pvdf=GalaxyWarp.plot_pvd(simdata,ang;disks=Dict("MAP"=>disks,"d0"=>disks0,"REAL"=>disks_real),clouds=clouds_sim,merged=true)
-		save("$(@__DIR__)/pvd_$(ang).png",pvdf)
+		save("$(filename)"*"pvd_$(ang).png",pvdf)
 	end
 end
 

@@ -294,8 +294,12 @@ function cloud_fitting_diagnostics(data,clouds::Clouds,savename;sigma=4.0,pvds=[
             θ=deg2rad(pvdi)
             figpvf=Figure(resolution=(1.9*1000,1050))
             axpvf=Axis(figpvf[1,1], xlabel=L"Projected radius [$\mathrm{kpc}$]",ylabel=L"Projected Velocity [$\mathrm{km\,s^{-1}}$]", labelsize=20)
-            contourf!(axpvf, data["Y"], data["V"], pvd(pvdi,data;slit=slit), levels=collect(2:2:20), colormap=:roma,extendhigh=:red)
- 
+            try
+                contourf!(axpvf, data["Y"], data["V"], pvd(pvdi,data;slit=slit), levels=collect(2:2:20), colormap=:roma,extendhigh=:red)
+            catch er
+                @warn "Cannot make contour plots, trying heatmap"
+                heatmap!(axpvf, data["Y"], data["V"], pvd(pvdi,data;slit=slit),colorrange=[2,20],colormap=:roma,extendhigh=:red)
+            end
             for (n,i) in enumerate(unique(clouds.I))
                 color=Cycled(n)
                 xx=Xp[clouds.belongs .== i]
