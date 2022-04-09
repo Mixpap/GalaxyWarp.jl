@@ -72,7 +72,9 @@ function plot_pvd(data,ang;cdata=nothing,clouds=nothing,disks=nothing,merged=fal
     figpvf=Figure(resolution=(1.9*600,650))
     axpvf=Axis(figpvf[1,1], xlabel=L"Projected radius [$\mathrm{kpc}$]",ylabel=L"Projected Velocity [$\mathrm{km\,s^{-1}}$]", labelsize=20)
     contourf!(axpvf, data["Y"], data["V"], pvd(ang,data;slit=slit), levels=collect(2:2:20), colormap=:roma,extendhigh=:red)
-
+    if !isnothing(cdata)
+        contour!(axpvf, cdata["Y"], cdata["V"], pvd(ang,cdata;slit=slit), levels=collect(2:2:20))
+    end
     #heatmap!(axpvf,data["Y"],data["V"],pvd(ang,data;slit=slit))
     if !isnothing(clouds)
         X=merged ? clouds.Xc : clouds.Xp
@@ -255,7 +257,7 @@ function cloud_fitting_diagnostics(data,clouds::Clouds,savename;sigma=4.0,pvds=[
     
     scatter!(axS,Rp,Sp,markersize=2,trasnparency=true)
     if length(clouds.Xc)<1
-        save("$(savename)_fit.png",figd)
+       #save("$(savename)_fit.png",figd)
     end
     # for pvd in pvds
     #     save("$(savename)_pvd_$(pvd).png",plot_pvd(data,pvd;clouds=clouds,merged=false))
@@ -274,7 +276,7 @@ function cloud_fitting_diagnostics(data,clouds::Clouds,savename;sigma=4.0,pvds=[
         #scatter!(axxy,Xc,Yc,color=Vc,colorrange=[-300.0,300.0],colormap=:seismic,markersize=10,trasnparency=true)
         
         scatter!(axS,Rc,Sc,markersize=10,trasnparency=true)
-        save("$(savename)_fit.png",figd)
+        #save("$(savename)_fit.png",figd)
         
 
         figd=Figure(resolution = (1500,700))
@@ -338,7 +340,7 @@ function cloud_fitting_diagnostics(data,clouds::Clouds,savename;sigma=4.0,pvds=[
 
             #scatter!(axpvf,F(θ,Xc,Yc,Rc;slit=slit).* (-sign.(cos.(F(θ,Xc,Yc,Φc;slit=slit) .- (θ-pi/2.0)))),F(θ,Xc,Yc,Vc;slit=slit),color=:black,marker='X',markersize=12)
 
-            save("$(savename)_pvd_$(pvdi)_merged.png",figpvf)
+            #save("$(savename)_pvd_$(pvdi)_merged.png",figpvf)
         end
 
         # figb=Figure(resolution = (2000,1000))
@@ -352,4 +354,5 @@ function cloud_fitting_diagnostics(data,clouds::Clouds,savename;sigma=4.0,pvds=[
         # end
         # save("$(savename)_fit_merging.png",figb)
     end
+    return figd,figpvf
 end
