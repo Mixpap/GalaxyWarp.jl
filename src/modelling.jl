@@ -176,14 +176,16 @@ end
 
 function cloud_properties(x::Float64,y::Float64,v::Float64,disks::Disks,dR::Float64;τ=nothing,dvi_min=300.0)::NTuple{7, Float64}
 	dvc=dvi_min
-	found=false
+	
 	zd=NaN
 	ic=NaN
 	vc=NaN
+    rc=NaN
 	phic=NaN
 	dT=NaN
 	Tnet=NaN
 	for (rd,i_d,phi_d,V_d) in zip(disks.R,disks.I,disks.PA,disks.V)
+        found=false
 		d,xy_ellipse=distf(rd, i_d, phi_d, [x,y])
 		if d<=dR
 			phi_ell=atan(y,x)

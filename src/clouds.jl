@@ -421,12 +421,13 @@ function merge_pixel_clouds!(clouds::Clouds;dr=0.1,dv=30.0,mp=4,df=5000.0,roll_d
 end
 
 
-function filter_clouds(clouds::Clouds,rect::Vector{Dict{String, Float64}};x0=-10.0,x1=10.0,y0=-10.0,y1=10.0,v0=-1000.0,v1=1000.0,s0=0.0,s1=500.0,f0=0.0,f1=100.0,dv=0.0)
+function filter_clouds(clouds::Clouds,rect::Vector{Dict{String, Float64}};x0=-10.0,x1=10.0,y0=-10.0,y1=10.0,z0=-10.0,z1=1.0,v0=-1000.0,v1=1000.0,s0=0.0,s1=500.0,f0=0.0,f1=100.0,dv=0.0)
 
     @info "Filtering clouds"
     maskF=clouds.Xp .>1000.0
     maskX=clouds.Xp .>1000.0
     maskY=clouds.Xp .>1000.0
+    maskZ=clouds.Xp .>1000.0
     maskV=clouds.Xp .>1000.0
     maskS=clouds.Xp .>1000.0
 
@@ -443,6 +444,9 @@ function filter_clouds(clouds::Clouds,rect::Vector{Dict{String, Float64}};x0=-10
         y0i = haskey(rd,"y0") ? rd["y0"] : y0
         y1i = haskey(rd,"y1") ? rd["y1"] : y1
 
+        z0i = haskey(rd,"z0") ? rd["z0"] : z0
+        z1i = haskey(rd,"z1") ? rd["z1"] : z1
+
         v0i = haskey(rd,"v0") ? rd["v0"] : v0
         v1i = haskey(rd,"v1") ? rd["v1"] : v1
 
@@ -455,12 +459,13 @@ function filter_clouds(clouds::Clouds,rect::Vector{Dict{String, Float64}};x0=-10
         maskF=maskF .|| (clouds.Fp .>f0i) .&& (clouds.Fp .<f1i)
         maskX=maskX .|| (clouds.Xp .>x0i) .&& (clouds.Xp .<x1i)
         maskY=maskY .|| (clouds.Yp .>y0i) .&& (clouds.Yp .<y1i)
+        maskZ=maskZ .|| (clouds.Z .>z0i) .&& (clouds.Z .<z1i)
         maskV=maskV .|| (clouds.Vp .>v0i) .&& (clouds.Vp .<v1i)
         maskS=maskS .|| (clouds.Sp .>s0i) .&& (clouds.Sp .<s1i)
         
         if length(clouds.r)>0
             dvi = haskey(rd,"dv") ? rd["dv"] : dv
-            maskF=maskF .|| (abs.(clouds.dV) .>dvi) 
+            maskF=maskF .&& (abs.(clouds.dV) .>dvi) 
         end
 
         maskFc=maskFc .|| (clouds.Fc .>f0i) .&& (clouds.Fc .<f1i)
@@ -470,7 +475,7 @@ function filter_clouds(clouds::Clouds,rect::Vector{Dict{String, Float64}};x0=-10
         maskSc=maskSc .|| (clouds.Sc .>s0i) .&& (clouds.Sc .<s1i)
         
     end
-    mask= maskF .&& maskX .&& maskY .&& maskV .&& maskS
+    mask= maskF .&& maskX .&& maskY .&& maskZ .&& maskV .&& maskS
     maskc= maskFc .&& maskXc .&& maskYc .&& maskVc .&& maskSc
 
     @info "Found $(sum(mask)) unique sub-clouds and $(sum(maskc)) merged clouds"

@@ -117,7 +117,7 @@ function plot_pvd(data,ang;cdata=nothing,clouds=nothing,disks=nothing,merged=fal
     return figpvf
 end
 
-function plot_disks(disks;sample=nothing)
+function plot_disks(disks,P;sample=nothing)
 	fig=Figure()
 	axpa=Axis(fig[1, 1])
 	axi=Axis(fig[2, 1])
@@ -128,16 +128,18 @@ function plot_disks(disks;sample=nothing)
 	end
 	axislegend(axpa)
 	axislegend(axi)
-	# if !isnothing(sample)
-	# 	alpha_pvd=7.0/size(sample)[1]
-	# 	for ppi in 1:size(sample)[1]
-	# 		pp_i=sample[ppi,:]
-	# 		update_parameters!(P,pp_i)
-	# 		disks_tmp = make_disks(P.Rd,P)
-	# 		lines!(axpa,disks_tmp.R,rad2deg.(disks_tmp.PA), transparency=true, color=RGBA(0.0,0.0,0.0,alpha_pvd))
-	# 		lines!(axi,disks_tmp.R,rad2deg.(disks_tmp.I), transparency=true, color=RGBA(0.0,0.0,0.0,alpha_pvd))
-	# 	end
-	# end
+	if !isnothing(sample)
+        P_tmp=copy(P)
+		alpha_pvd=7.0/size(sample)[1]
+		for ppi in 1:size(sample)[1]
+			pp_i=sample[ppi,:]
+			update_parameters!(P_tmp,pp_i)
+			disks_tmp = make_disks(P.Rd,P_tmp)
+			lines!(axpa,disks_tmp.R,rad2deg.(disks_tmp.PA), transparency=true, color=RGBA(0.0,0.0,0.0,alpha_pvd))
+			lines!(axi,disks_tmp.R,rad2deg.(disks_tmp.I), transparency=true, color=RGBA(0.0,0.0,0.0,alpha_pvd))
+		end
+	end
+    
 	axpa.ylabel="Position Angle [deg]"
 	axi.ylabel="Inclination [deg]"
 	axi.xlabel="Radius [kpc]"
