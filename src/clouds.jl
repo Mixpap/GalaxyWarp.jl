@@ -421,21 +421,35 @@ function merge_pixel_clouds!(clouds::Clouds;dr=0.1,dv=30.0,mp=4,df=5000.0,roll_d
 end
 
 
-function filter_clouds(clouds::Clouds,rect::Vector{Dict{String, Float64}};x0=-10.0,x1=10.0,y0=-10.0,y1=10.0,z0=-10.0,z1=1.0,v0=-1000.0,v1=1000.0,s0=0.0,s1=500.0,f0=0.0,f1=100.0,dv=0.0)
+function filter_clouds(clouds::Clouds,rect::Vector{Dict{String, Float64}};x0=-10.0,x1=10.0,y0=-10.0,y1=10.0,z0=-10.0,z1=10.0,v0=-1000.0,v1=1000.0,s0=0.0,s1=500.0,f0=0.0,f1=100.0,dv=0.0)
 
     @info "Filtering clouds"
-    maskF=clouds.Xp .>1000.0
-    maskX=clouds.Xp .>1000.0
-    maskY=clouds.Xp .>1000.0
-    maskZ=clouds.Xp .>1000.0
-    maskV=clouds.Xp .>1000.0
-    maskS=clouds.Xp .>1000.0
+    # maskF=clouds.Xp .>1000.0
+    # maskX=clouds.Xp .>1000.0
+    # maskY=clouds.Xp .>1000.0
+    # maskZ=clouds.Xp .>1000.0
+    # maskV=clouds.Xp .>1000.0
+    # maskS=clouds.Xp .>1000.0
 
-    maskFc=clouds.Xc .>1000.0
-    maskXc=clouds.Xc .>1000.0
-    maskYc=clouds.Xc .>1000.0
-    maskVc=clouds.Xc .>1000.0
-    maskSc=clouds.Xc .>1000.0
+    # maskFc=clouds.Xc .>1000.0
+    # maskXc=clouds.Xc .>1000.0
+    # maskYc=clouds.Xc .>1000.0
+    # maskVc=clouds.Xc .>1000.0
+    # maskSc=clouds.Xc .>1000.0
+
+    maskF=clouds.Xp .<1000.0
+    maskF=clouds.Xp .<1000.0
+    maskX=clouds.Xp .<1000.0
+    maskY=clouds.Xp .<1000.0
+    maskZ=clouds.Xp .<1000.0
+    maskV=clouds.Xp .<1000.0
+    maskS=clouds.Xp .<1000.0
+
+    maskFc=clouds.Xc .<1000.0
+    maskXc=clouds.Xc .<1000.0
+    maskYc=clouds.Xc .<1000.0
+    maskVc=clouds.Xc .<1000.0
+    maskSc=clouds.Xc .<1000.0
 
     for rd in rect
         x0i = haskey(rd,"x0") ? rd["x0"] : x0
