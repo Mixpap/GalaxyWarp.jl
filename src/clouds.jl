@@ -467,12 +467,11 @@ function filter_clouds(clouds::Clouds,rect::Vector{Dict{String, Float64}};x0=-10
         f0i = haskey(rd,"f0") ? rd["f0"] : f0
         f1i = haskey(rd,"f1") ? rd["f1"] : f1
 
-        maskF=maskF .|| (clouds.Fp .>f0i) .&& (clouds.Fp .<f1i)
-        maskX=maskX .|| (clouds.Xp .>x0i) .&& (clouds.Xp .<x1i)
-        maskY=maskY .|| (clouds.Yp .>y0i) .&& (clouds.Yp .<y1i)
-        
-        maskV=maskV .|| (clouds.Vp .>v0i) .&& (clouds.Vp .<v1i)
-        maskS=maskS .|| (clouds.Sp .>s0i) .&& (clouds.Sp .<s1i)
+        maskF=maskF .&& (clouds.Fp .>f0i) .&& (clouds.Fp .<f1i)
+        maskX=maskX .&& (clouds.Xp .>x0i) .&& (clouds.Xp .<x1i)
+        maskY=maskY .&& (clouds.Yp .>y0i) .&& (clouds.Yp .<y1i)
+        maskV=maskV .&& (clouds.Vp .>v0i) .&& (clouds.Vp .<v1i)
+        maskS=maskS .&& (clouds.Sp .>s0i) .&& (clouds.Sp .<s1i)
         
         if length(clouds.r)>0
             dvi = haskey(rd,"dv") ? rd["dv"] : dv
@@ -480,14 +479,14 @@ function filter_clouds(clouds::Clouds,rect::Vector{Dict{String, Float64}};x0=-10
 
             z0i = haskey(rd,"z0") ? rd["z0"] : z0
             z1i = haskey(rd,"z1") ? rd["z1"] : z1
-            maskZ=maskZ .|| (clouds.Z .>z0i) .&& (clouds.Z .<z1i)
+            maskZ=maskZ .&& (clouds.Z .>z0i) .&& (clouds.Z .<z1i)
         end
 
-        maskFc=maskFc .|| (clouds.Fc .>f0i) .&& (clouds.Fc .<f1i)
-        maskXc=maskXc .|| (clouds.Xc .>x0i) .&& (clouds.Xc .<x1i)
-        maskYc=maskYc .|| (clouds.Yc .>y0i) .&& (clouds.Yc .<y1i)
-        maskVc=maskVc .|| (clouds.Vc .>v0i) .&& (clouds.Vc .<v1i)
-        maskSc=maskSc .|| (clouds.Sc .>s0i) .&& (clouds.Sc .<s1i)
+        maskFc=maskFc .&& (clouds.Fc .>f0i) .&& (clouds.Fc .<f1i)
+        maskXc=maskXc .&& (clouds.Xc .>x0i) .&& (clouds.Xc .<x1i)
+        maskYc=maskYc .&& (clouds.Yc .>y0i) .&& (clouds.Yc .<y1i)
+        maskVc=maskVc .&& (clouds.Vc .>v0i) .&& (clouds.Vc .<v1i)
+        maskSc=maskSc .&& (clouds.Sc .>s0i) .&& (clouds.Sc .<s1i)
         
     end
     mask= maskF .&& maskX .&& maskY .&& maskZ .&& maskV .&& maskS

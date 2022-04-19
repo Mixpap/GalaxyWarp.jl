@@ -215,7 +215,6 @@ function cloud_properties(x::Float64,y::Float64,v::Float64,disks::Disks,dR::Floa
             Md_=[cos(ic)*cos(phic),cos(ic)*sin(phic),-sin(ic)]#cross(Nd_,Id_)
             Md_=Md_ ./norm(Md_)
             
-            
             dT=dot(τ([x,y,zd]),Nd_)
             τ_net(ϕ)=dot(τ(rc .*cos(ϕ) .* Id_ .+ rc .* sin(ϕ) .*Md_),Nd_)
             Tnet=rc*3.0857e16  /vc * quadgk(τ_net,0.0,2*pi;atol=0.1)[1]
