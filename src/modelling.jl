@@ -186,7 +186,6 @@ function cloud_properties(x::Float64,y::Float64,v::Float64,disks::Disks,dR::Floa
 	Tnet=NaN
     found=false
 	for (rd,i_d,phi_d,V_d) in zip(disks.R,disks.I,disks.PA,disks.V)
-        found=false
 		d,xy_ellipse=distf(rd, i_d, phi_d, [x,y])
 		if d<=dR
 			phi_ell=atan(y,x)
