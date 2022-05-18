@@ -191,10 +191,10 @@ function cloud_properties(x::Float64,y::Float64,v::Float64,disks::Disks,dR::Floa
 			phi_ell=atan(y,x)
 			Vd_sky= V_d* sin(i_d)*sin(phi_ell-phi_d)/sqrt(1.0 +tan(i_d)^2.0*cos(phi_ell-phi_d)^2.0)
 			
-			dvi=abs(Vd_sky-v)
+			dvi=abs(v-Vd_sky)
 			if dvi<dvi_min
 				dvi_min=dvi
-				dvc=Vd_sky-v
+				dvc=v-Vd_sky
 				vc=V_d
 				zd = -tan(i_d)*(xy_ellipse[1]*cos(phi_d)+xy_ellipse[2]*sin(phi_d))
 				ic=i_d
