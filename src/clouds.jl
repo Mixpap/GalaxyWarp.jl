@@ -463,7 +463,7 @@ function filter_clouds(clouds,rect::Vector{Dict{String, Float64}};neg=false,x0=-
         end
 		mask =mask .|| mask_rec
 
-		mask_rec= ((clouds.Xc .>x0i) .&& (clouds.Xc .<x1i)) .&& ((clouds.Fc .>f0i) .&& (clouds.Fc .<f1i)) .&& ((clouds.Yc .>y0i) .&& (clouds.Yc .<y1i)) .&& ((clouds.Vc .>v0i) .&& (clouds.Vc .<v1i)) .&& ((clouds.VC .>vc0i) .&& (clouds.VC .<vc1i)) .&& ((clouds.Sc .>s0i) .&& (clouds.Sc .<s1i)) 
+		mask_rec= ((clouds.Xc .>x0i) .&& (clouds.Xc .<x1i)) .&& ((clouds.Fc .>f0i) .&& (clouds.Fc .<f1i)) .&& ((clouds.Yc .>y0i) .&& (clouds.Yc .<y1i)) .&& ((clouds.Vc .>v0i) .&& (clouds.Vc .<v1i)) .&& ((clouds.Sc .>s0i) .&& (clouds.Sc .<s1i)) 
 
         maskc=maskc .|| mask_rec
         
