@@ -455,11 +455,11 @@ function filter_clouds(clouds,rect::Vector{Dict{String, Float64}};neg=false,x0=-
         f0i = haskey(rd,"f0") ? rd["f0"] : f0
         f1i = haskey(rd,"f1") ? rd["f1"] : f1
 
-		mask_rec= ((clouds.Xp .>x0i) .&& (clouds.Xp .<x1i)) .&& ((clouds.Fp .>f0i) .&& (clouds.Fp .<f1i)) .&& ((clouds.Yp .>y0i) .&& (clouds.Yp .<y1i)) .&& ((clouds.Z .>z0i) .&& (clouds.Z .<z1i)) .&& ((clouds.Vp .>v0i) .&& (clouds.Vp .<v1i)) .&& ((clouds.VC .>vc0i) .&& (clouds.VC .<vc1i)) .&& ((clouds.Sp .>s0i) .&& (clouds.Sp .<s1i)) .&& ((clouds.R .>R0i) .&& (clouds.R .<R1i)) .&& ((clouds.r .>r0i) .&& (clouds.r .<r1i))
+		mask_rec= ((clouds.Xp .>x0i) .&& (clouds.Xp .<x1i)) .&& ((clouds.Fp .>f0i) .&& (clouds.Fp .<f1i)) .&& ((clouds.Yp .>y0i) .&& (clouds.Yp .<y1i)) .&& ((clouds.Vp .>v0i) .&& (clouds.Vp .<v1i)) .&& ((clouds.Sp .>s0i) .&& (clouds.Sp .<s1i)) 
 		if length(clouds.r)>0
             dv0i = haskey(rd,"dv0") ? rd["dv0"] : dv0
 			dv1i = haskey(rd,"dv1") ? rd["dv1"] : dv1
-            mask_rec=mask_rec .&& ((clouds.dV .>dv0i) .&& (clouds.dV .<dv1i) )
+            mask_rec=mask_rec .&& ((clouds.dV .>dv0i) .&& (clouds.dV .<dv1i) )  .&& ((clouds.VC .>vc0i) .&& (clouds.VC .<vc1i)) .&& ((clouds.R .>R0i) .&& (clouds.R .<R1i)) .&& ((clouds.r .>r0i) .&& (clouds.r .<r1i)) .&& ((clouds.Z .>z0i) .&& (clouds.Z .<z1i))
         end
 		mask =mask .|| mask_rec
 
