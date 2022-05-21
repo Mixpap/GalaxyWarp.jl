@@ -111,6 +111,18 @@ function distf(a::Float64, inclination::Float64, pa::Float64, p::Vector{Float64}
     return dst, p_edge_rot
 end
 
+"""
+Disk Creation routine
+
+Input
+======
+- ``Rd`` vector of radii
+- ``P`` Parameters struct which contains function ppi(R; I params),ppa(R; PA params),Vcirc(R;V params)
+
+Output
+====
+Disks struct (R,PA(R),I(R),V(R))
+"""
 function make_disks(Rd::Vector{Float64},P)::Disks
 	
 	PA = [getfield(P,s) for s in P.PA]
@@ -174,7 +186,7 @@ function logprior(P,priors)::Float64
 	return ps
 end
 
-function cloud_properties(x::Float64,y::Float64,v::Float64,disks::Disks,dR::Float64;τ=nothing,dvi_min=300.0)::NTuple{7, Float64}
+function cloud_properties(x::Float64,y::Float64,v::Float64,disks::GalaxyWarp.Disks,dR::Float64;τ=nothing,dvi_min=300.0)::NTuple{8, Float64}
 	dvc=dvi_min
 	
 	zd=NaN
@@ -184,7 +196,7 @@ function cloud_properties(x::Float64,y::Float64,v::Float64,disks::Disks,dR::Floa
 	phic=NaN
 	dT=NaN
 	Tnet=NaN
-    k_best=NaN
+    k_best=0
     found=false
 	for (k,(rd,i_d,phi_d,V_d)) in enumerate(zip(disks.R,disks.I,disks.PA,disks.V))
 		d,xy_ellipse=distf(rd, i_d, phi_d, [x,y])
@@ -223,11 +235,11 @@ function cloud_properties(x::Float64,y::Float64,v::Float64,disks::Disks,dR::Floa
             return dvc,vc,zd,ic,phic,dT,Tnet,k_best
         end
 	else 
-		return NaN,NaN,NaN,NaN,NaN,NaN,NaN,NaN
+		return NaN,NaN,NaN,NaN,NaN,NaN,NaN,0
 	end
 end
 
-function cloud_geometry!(clouds::Clouds,disks::Disks,P;dV0=300.0,τ=nothing)#::Geometry
+function cloud_geometry!(clouds::GalaxyWarp.Clouds,disks::GalaxyWarp.Disks,P;dV0=300.0,τ=nothing)#::Geometry
 
     X=clouds.Xp
     Y=clouds.Yp
@@ -241,7 +253,7 @@ function cloud_geometry!(clouds::Clouds,disks::Disks,P;dV0=300.0,τ=nothing)#::G
 	Tnet=fill(NaN,length(X))
     PA=fill(NaN,length(X))
     I=fill(NaN,length(X))
-    K=fill(NaN,length(X))
+    K=zeros(Int64,length(X))
     FF=Bool.(zeros(length(X)))
 	dV=fill(dV0,length(X))
     Threads.@threads for j in 1:length(X)
@@ -250,14 +262,6 @@ function cloud_geometry!(clouds::Clouds,disks::Disks,P;dV0=300.0,τ=nothing)#::G
 		v=V[j]
         dvi_min=dV0
 		dV[j],VC[j],Z[j],I[j],PA[j],dT[j],Tnet[j],K[j]=cloud_properties(x,y,v,disks,P.dR;τ=τ,dvi_min=dV0)
-		# κ1,κ2,κ3,κ4,κ5,κ6,κ7=cloud_properties(x,y,v,disks,P.dR;τ=τ,dvi_min=dV0)
-		# dV[k]=κ1
-		# VC[k]=κ2
-		# Z[k]=κ3
-		# I[k]=κ4
-		# PA[k]=κ5
-		# dT[k]=κ6
-		# Tnet[k]=κ7
     end
 
     clouds.r=sqrt.(X .^2.0 .+Y .^2.0 )
@@ -271,9 +275,7 @@ function cloud_geometry!(clouds::Clouds,disks::Disks,P;dV0=300.0,τ=nothing)#::G
     clouds.VC=VC
     clouds.dV=dV
     clouds.k=K
-	#return Geometry(sqrt.(X .^2.0 .+Y .^2.0 .+Z .^2.0), sqrt.(X .^2.0 .+Y .^2.0 ),PA,I,M,X,Y,V,VC,dV,Z,atan.(Y,X),dT,Tnet)
 end
-
 
 function manipulate_cube(ix::Int64,x::Float64,iy::Int64,y::Float64,cube::Array{Float64, 3},model_cube::Array{Float64, 3},data::Dict{String, Any},disks::Disks,search_v::Float64,Sd::Function,Sdpars::Vector{Float64},Rd::Vector{Float64},dR::Float64,lowest_sig::Float64)
     for (rd,i_d,phi_d,V_d) in zip(disks.R,disks.I,disks.PA,disks.V)
