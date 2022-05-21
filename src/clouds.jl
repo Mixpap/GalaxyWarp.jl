@@ -476,6 +476,6 @@ function filter_clouds(clouds,rect::Vector{Dict{String, Float64}};neg=false,x0=-
     elseif length(clouds.r)>0
         return GalaxyWarp.Clouds(Xp=clouds.Xp[mask],Yp=clouds.Yp[mask],Vp=clouds.Vp[mask],Fp=clouds.Fp[mask],Sp=clouds.Sp[mask],Ip=clouds.Ip[mask],logs=merge(clouds.logs,Dict{String, Any}("filtered"=>true)),belongs=clouds.belongs[mask],I=clouds.I[maskc],k=clouds.k[mask],Xc=clouds.Xc[maskc],Yc=clouds.Yc[maskc],Vc=clouds.Vc[maskc],Fc=clouds.Fc[maskc],Sc=clouds.Sc[maskc],Ic=clouds.Ic[maskc],r=clouds.r[mask],R=clouds.R[mask],Φ=clouds.Φ[mask],VC=clouds.VC[mask],dV=clouds.dV[mask],Z=clouds.Z[mask],inc=clouds.inc[mask],pa=clouds.pa[mask],dT=clouds.dT[mask],Tnet=clouds.Tnet[mask])
     else
-        return GalaxyWarp.Clouds(Xp=clouds.Xp[mask],Yp=clouds.Yp[mask],Vp=clouds.Vp[mask],Fp=clouds.Fp[mask],Sp=clouds.Sp[mask],Ip=clouds.Ip[mask],k=clouds.k[mask],logs=merge(clouds.logs,Dict{String, Any}("filtered"=>true)))
+        return GalaxyWarp.Clouds(Xp=clouds.Xp[mask],Yp=clouds.Yp[mask],Vp=clouds.Vp[mask],Fp=clouds.Fp[mask],Sp=clouds.Sp[mask],Ip=clouds.Ip[mask],logs=merge(clouds.logs,Dict{String, Any}("filtered"=>true)))
     end
 end
