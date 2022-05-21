@@ -9,6 +9,7 @@
 
     belongs::Vector{Int64}=[]
     I::Vector{Int64}=[]
+    k::Vector{Int64}=[]
 
     Xc::Vector{Float64}=[]
     Yc::Vector{Float64}=[]
@@ -161,8 +162,6 @@ The likelihood function is:
 function fit_pixel(signal::Vector{Float64},rms::Float64,vv::Vector{Float64},er::Float64;vmin=-400.0,vmax=400.0,svmin=15.0,smin=0.75,svmax=30.0,smax=1000.0,maxsteps=30000,popsize=40,N0=1,Nmax=8)
     lowerc = [smin*rms,vmin,svmin]
     upperc = [smax*rms,vmax,svmax]
-
-
 
     lower=Float64[]
     upper=Float64[]
@@ -335,8 +334,6 @@ end
 #     return belongs
 # end
 
-
-
 movingaverage(g, n) = [i < n ? mean(g[begin:i]) : mean(g[i-n+1:i]) for i in 1:length(g)]
 
 # function merge_pixel_clouds(X::Vector{Float64},Y::Vector{Float64},V::Vector{Float64},F::Vector{Float64},sV::Vector{Float64};dr=0.1,dv=30.0,mp=4,df=5000.0,roll_d=0.1,max_d=2.0,plots=false)
@@ -474,96 +471,11 @@ function filter_clouds(clouds,rect::Vector{Dict{String, Float64}};neg=false,x0=-
 	end
     @info "Found $(sum(mask)) unique sub-clouds and $(sum(maskc)) merged clouds"
 
-
     if length(clouds.r)>0 && length(clouds.ϕ)>0
-        return GalaxyWarp.Clouds(Xp=clouds.Xp[mask],Yp=clouds.Yp[mask],Vp=clouds.Vp[mask],Fp=clouds.Fp[mask],Sp=clouds.Sp[mask],Ip=clouds.Ip[mask],logs=merge(clouds.logs,Dict{String, Any}("filtered"=>true)),belongs=clouds.belongs[mask],I=clouds.I[maskc],Xc=clouds.Xc[maskc],Yc=clouds.Yc[maskc],Vc=clouds.Vc[maskc],Fc=clouds.Fc[maskc],Sc=clouds.Sc[maskc],Ic=clouds.Ic[maskc],r=clouds.r[mask],R=clouds.R[mask],Φ=clouds.Φ[mask],VC=clouds.VC[mask],dV=clouds.dV[mask],Z=clouds.Z[mask],inc=clouds.inc[mask],pa=clouds.pa[mask],dT=clouds.dT[mask],Tnet=clouds.Tnet[mask],ϕ=clouds.ϕ[mask],tilt=clouds.tilt[mask])
+        return GalaxyWarp.Clouds(Xp=clouds.Xp[mask],Yp=clouds.Yp[mask],Vp=clouds.Vp[mask],Fp=clouds.Fp[mask],Sp=clouds.Sp[mask],Ip=clouds.Ip[mask],logs=merge(clouds.logs,Dict{String, Any}("filtered"=>true)),belongs=clouds.belongs[mask],I=clouds.I[maskc],k=clouds.k[mask],Xc=clouds.Xc[maskc],Yc=clouds.Yc[maskc],Vc=clouds.Vc[maskc],Fc=clouds.Fc[maskc],Sc=clouds.Sc[maskc],Ic=clouds.Ic[maskc],r=clouds.r[mask],R=clouds.R[mask],Φ=clouds.Φ[mask],VC=clouds.VC[mask],dV=clouds.dV[mask],Z=clouds.Z[mask],inc=clouds.inc[mask],pa=clouds.pa[mask],dT=clouds.dT[mask],Tnet=clouds.Tnet[mask],ϕ=clouds.ϕ[mask],tilt=clouds.tilt[mask])
     elseif length(clouds.r)>0
-        return GalaxyWarp.Clouds(Xp=clouds.Xp[mask],Yp=clouds.Yp[mask],Vp=clouds.Vp[mask],Fp=clouds.Fp[mask],Sp=clouds.Sp[mask],Ip=clouds.Ip[mask],logs=merge(clouds.logs,Dict{String, Any}("filtered"=>true)),belongs=clouds.belongs[mask],I=clouds.I[maskc],Xc=clouds.Xc[maskc],Yc=clouds.Yc[maskc],Vc=clouds.Vc[maskc],Fc=clouds.Fc[maskc],Sc=clouds.Sc[maskc],Ic=clouds.Ic[maskc],r=clouds.r[mask],R=clouds.R[mask],Φ=clouds.Φ[mask],VC=clouds.VC[mask],dV=clouds.dV[mask],Z=clouds.Z[mask],inc=clouds.inc[mask],pa=clouds.pa[mask],dT=clouds.dT[mask],Tnet=clouds.Tnet[mask])
+        return GalaxyWarp.Clouds(Xp=clouds.Xp[mask],Yp=clouds.Yp[mask],Vp=clouds.Vp[mask],Fp=clouds.Fp[mask],Sp=clouds.Sp[mask],Ip=clouds.Ip[mask],logs=merge(clouds.logs,Dict{String, Any}("filtered"=>true)),belongs=clouds.belongs[mask],I=clouds.I[maskc],k=clouds.k[mask],Xc=clouds.Xc[maskc],Yc=clouds.Yc[maskc],Vc=clouds.Vc[maskc],Fc=clouds.Fc[maskc],Sc=clouds.Sc[maskc],Ic=clouds.Ic[maskc],r=clouds.r[mask],R=clouds.R[mask],Φ=clouds.Φ[mask],VC=clouds.VC[mask],dV=clouds.dV[mask],Z=clouds.Z[mask],inc=clouds.inc[mask],pa=clouds.pa[mask],dT=clouds.dT[mask],Tnet=clouds.Tnet[mask])
     else
-        return GalaxyWarp.Clouds(Xp=clouds.Xp[mask],Yp=clouds.Yp[mask],Vp=clouds.Vp[mask],Fp=clouds.Fp[mask],Sp=clouds.Sp[mask],Ip=clouds.Ip[mask],logs=merge(clouds.logs,Dict{String, Any}("filtered"=>true)))
+        return GalaxyWarp.Clouds(Xp=clouds.Xp[mask],Yp=clouds.Yp[mask],Vp=clouds.Vp[mask],Fp=clouds.Fp[mask],Sp=clouds.Sp[mask],Ip=clouds.Ip[mask],k=clouds.k[mask],logs=merge(clouds.logs,Dict{String, Any}("filtered"=>true)))
     end
 end
-
-
-# function filter_clouds(clouds::Clouds,rect::Vector{Dict{String, Float64}};x0=-10.0,x1=10.0,y0=-10.0,y1=10.0,z0=-10.0,z1=10.0,v0=-1000.0,v1=1000.0,s0=0.0,s1=500.0,f0=0.0,f1=100.0,dv=0.0)
-
-#     @info "Filtering clouds"
-#     # maskF=clouds.Xp .>1000.0
-#     # maskX=clouds.Xp .>1000.0
-#     # maskY=clouds.Xp .>1000.0
-#     # maskZ=clouds.Xp .>1000.0
-#     # maskV=clouds.Xp .>1000.0
-#     # maskS=clouds.Xp .>1000.0
-
-#     # maskFc=clouds.Xc .>1000.0
-#     # maskXc=clouds.Xc .>1000.0
-#     # maskYc=clouds.Xc .>1000.0
-#     # maskVc=clouds.Xc .>1000.0
-#     # maskSc=clouds.Xc .>1000.0
-
-#     maskF=clouds.Xp .<1000.0
-#     maskF=clouds.Xp .<1000.0
-#     maskX=clouds.Xp .<1000.0
-#     maskY=clouds.Xp .<1000.0
-#     maskZ=clouds.Xp .<1000.0
-#     maskV=clouds.Xp .<1000.0
-#     maskS=clouds.Xp .<1000.0
-
-#     maskFc=clouds.Xc .<1000.0
-#     maskXc=clouds.Xc .<1000.0
-#     maskYc=clouds.Xc .<1000.0
-#     maskVc=clouds.Xc .<1000.0
-#     maskSc=clouds.Xc .<1000.0
-
-#     for rd in rect
-#         x0i = haskey(rd,"x0") ? rd["x0"] : x0
-#         x1i = haskey(rd,"x1") ? rd["x1"] : x1
-
-#         y0i = haskey(rd,"y0") ? rd["y0"] : y0
-#         y1i = haskey(rd,"y1") ? rd["y1"] : y1
-
-#         v0i = haskey(rd,"v0") ? rd["v0"] : v0
-#         v1i = haskey(rd,"v1") ? rd["v1"] : v1
-
-#         s0i = haskey(rd,"s0") ? rd["s0"] : s0
-#         s1i = haskey(rd,"s1") ? rd["s1"] : s1
-
-#         f0i = haskey(rd,"f0") ? rd["f0"] : f0
-#         f1i = haskey(rd,"f1") ? rd["f1"] : f1
-
-#         maskF=maskF .&& (clouds.Fp .>f0i) .&& (clouds.Fp .<f1i)
-#         maskX=maskX .&& (clouds.Xp .>x0i) .&& (clouds.Xp .<x1i)
-#         maskY=maskY .&& (clouds.Yp .>y0i) .&& (clouds.Yp .<y1i)
-#         maskV=maskV .&& (clouds.Vp .>v0i) .&& (clouds.Vp .<v1i)
-#         maskS=maskS .&& (clouds.Sp .>s0i) .&& (clouds.Sp .<s1i)
-        
-#         if length(clouds.r)>0
-#             dvi = haskey(rd,"dv") ? rd["dv"] : dv
-#             maskF=maskF .&& (abs.(clouds.dV) .>dvi) 
-
-#             z0i = haskey(rd,"z0") ? rd["z0"] : z0
-#             z1i = haskey(rd,"z1") ? rd["z1"] : z1
-#             maskZ=maskZ .&& (clouds.Z .>z0i) .&& (clouds.Z .<z1i)
-#         end
-
-#         maskFc=maskFc .&& (clouds.Fc .>f0i) .&& (clouds.Fc .<f1i)
-#         maskXc=maskXc .&& (clouds.Xc .>x0i) .&& (clouds.Xc .<x1i)
-#         maskYc=maskYc .&& (clouds.Yc .>y0i) .&& (clouds.Yc .<y1i)
-#         maskVc=maskVc .&& (clouds.Vc .>v0i) .&& (clouds.Vc .<v1i)
-#         maskSc=maskSc .&& (clouds.Sc .>s0i) .&& (clouds.Sc .<s1i)
-        
-#     end
-#     mask= maskF .&& maskX .&& maskY .&& maskZ .&& maskV .&& maskS
-#     maskc= maskFc .&& maskXc .&& maskYc .&& maskVc .&& maskSc
-
-#     @info "Found $(sum(mask)) unique sub-clouds and $(sum(maskc)) merged clouds"
-
-
-#     if length(clouds.r)>0 && length(clouds.ϕ)>0
-#         return Clouds(Xp=clouds.Xp[mask],Yp=clouds.Yp[mask],Vp=clouds.Vp[mask],Fp=clouds.Fp[mask],Sp=clouds.Sp[mask],Ip=clouds.Ip[mask],logs=merge(clouds.logs,Dict{String, Any}("filtered"=>true)),belongs=clouds.belongs[mask],I=clouds.I[maskc],Xc=clouds.Xc[maskc],Yc=clouds.Yc[maskc],Vc=clouds.Vc[maskc],Fc=clouds.Fc[maskc],Sc=clouds.Sc[maskc],Ic=clouds.Ic[maskc],r=clouds.r[mask],R=clouds.R[mask],Φ=clouds.Φ[mask],VC=clouds.VC[mask],dV=clouds.dV[mask],Z=clouds.Z[mask],inc=clouds.inc[mask],pa=clouds.pa[mask],dT=clouds.dT[mask],Tnet=clouds.Tnet[mask],ϕ=clouds.ϕ[mask],tilt=clouds.tilt[mask])
-#     elseif length(clouds.r)>0
-#         return Clouds(Xp=clouds.Xp[mask],Yp=clouds.Yp[mask],Vp=clouds.Vp[mask],Fp=clouds.Fp[mask],Sp=clouds.Sp[mask],Ip=clouds.Ip[mask],logs=merge(clouds.logs,Dict{String, Any}("filtered"=>true)),belongs=clouds.belongs[mask],I=clouds.I[maskc],Xc=clouds.Xc[maskc],Yc=clouds.Yc[maskc],Vc=clouds.Vc[maskc],Fc=clouds.Fc[maskc],Sc=clouds.Sc[maskc],Ic=clouds.Ic[maskc],r=clouds.r[mask],R=clouds.R[mask],Φ=clouds.Φ[mask],VC=clouds.VC[mask],dV=clouds.dV[mask],Z=clouds.Z[mask],inc=clouds.inc[mask],pa=clouds.pa[mask],dT=clouds.dT[mask],Tnet=clouds.Tnet[mask])
-#     else
-#         return Clouds(Xp=clouds.Xp[mask],Yp=clouds.Yp[mask],Vp=clouds.Vp[mask],Fp=clouds.Fp[mask],Sp=clouds.Sp[mask],Ip=clouds.Ip[mask],logs=merge(clouds.logs,Dict{String, Any}("filtered"=>true)))
-#     end
-# end

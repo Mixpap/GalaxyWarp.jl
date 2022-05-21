@@ -184,8 +184,9 @@ function cloud_properties(x::Float64,y::Float64,v::Float64,disks::Disks,dR::Floa
 	phic=NaN
 	dT=NaN
 	Tnet=NaN
+    k_best=NaN
     found=false
-	for (rd,i_d,phi_d,V_d) in zip(disks.R,disks.I,disks.PA,disks.V)
+	for (k,(rd,i_d,phi_d,V_d)) in enumerate(zip(disks.R,disks.I,disks.PA,disks.V))
 		d,xy_ellipse=distf(rd, i_d, phi_d, [x,y])
 		if d<=dR
 			phi_ell=atan(y,x)
@@ -200,13 +201,14 @@ function cloud_properties(x::Float64,y::Float64,v::Float64,disks::Disks,dR::Floa
 				ic=i_d
 				phic=phi_d
 				rc=rd
+                k_best=k
 				found =true
 			end
 		end
 	end
 	if found
         if isnothing(τ)
-            return dvc,vc,zd,ic,phic,NaN,NaN
+            return dvc,vc,zd,ic,phic,NaN,NaN,k_best
         else
             Wd_ = [sin(ic)*cos(phic),sin(ic)*sin(phic),cos(ic)]
             Nd_= Wd_ ./norm(Wd_)
@@ -218,10 +220,10 @@ function cloud_properties(x::Float64,y::Float64,v::Float64,disks::Disks,dR::Floa
             dT=dot(τ([x,y,zd]),Nd_)
             τ_net(ϕ)=dot(τ(rc .*cos(ϕ) .* Id_ .+ rc .* sin(ϕ) .*Md_),Nd_)
             Tnet=rc*3.0857e16  /vc * quadgk(τ_net,0.0,2*pi;atol=0.1)[1]
-            return dvc,vc,zd,ic,phic,dT,Tnet
+            return dvc,vc,zd,ic,phic,dT,Tnet,k_best
         end
 	else 
-		return NaN,NaN,NaN,NaN,NaN,NaN,NaN
+		return NaN,NaN,NaN,NaN,NaN,NaN,NaN,NaN
 	end
 end
 
@@ -239,22 +241,23 @@ function cloud_geometry!(clouds::Clouds,disks::Disks,P;dV0=300.0,τ=nothing)#::G
 	Tnet=fill(NaN,length(X))
     PA=fill(NaN,length(X))
     I=fill(NaN,length(X))
+    K=fill(NaN,length(X))
     FF=Bool.(zeros(length(X)))
 	dV=fill(dV0,length(X))
-    Threads.@threads for k in 1:length(X)
-		x=X[k]
-		y=Y[k]
-		v=V[k]
+    Threads.@threads for j in 1:length(X)
+		x=X[j]
+		y=Y[j]
+		v=V[j]
         dvi_min=dV0
-		
-		κ1,κ2,κ3,κ4,κ5,κ6,κ7=cloud_properties(x,y,v,disks,P.dR;τ=τ,dvi_min=dV0)
-		dV[k]=κ1
-		VC[k]=κ2
-		Z[k]=κ3
-		I[k]=κ4
-		PA[k]=κ5
-		dT[k]=κ6
-		Tnet[k]=κ7
+		dV[j],VC[j],Z[j],I[j],PA[j],dT[j],Tnet[j],K[j]=cloud_properties(x,y,v,disks,P.dR;τ=τ,dvi_min=dV0)
+		# κ1,κ2,κ3,κ4,κ5,κ6,κ7=cloud_properties(x,y,v,disks,P.dR;τ=τ,dvi_min=dV0)
+		# dV[k]=κ1
+		# VC[k]=κ2
+		# Z[k]=κ3
+		# I[k]=κ4
+		# PA[k]=κ5
+		# dT[k]=κ6
+		# Tnet[k]=κ7
     end
 
     clouds.r=sqrt.(X .^2.0 .+Y .^2.0 )
@@ -267,6 +270,7 @@ function cloud_geometry!(clouds::Clouds,disks::Disks,P;dV0=300.0,τ=nothing)#::G
     clouds.Tnet=Tnet
     clouds.VC=VC
     clouds.dV=dV
+    clouds.k=K
 	#return Geometry(sqrt.(X .^2.0 .+Y .^2.0 .+Z .^2.0), sqrt.(X .^2.0 .+Y .^2.0 ),PA,I,M,X,Y,V,VC,dV,Z,atan.(Y,X),dT,Tnet)
 end
 
