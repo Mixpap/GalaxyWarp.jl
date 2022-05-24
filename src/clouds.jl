@@ -418,13 +418,14 @@ function merge_pixel_clouds!(clouds::Clouds;dr=0.1,dv=30.0,mp=4,df=5000.0,roll_d
 end
 
 
-function filter_clouds(clouds,rect::Vector{Dict{String, Float64}};neg=false,x0=-10.0,x1=10.0,y0=-10.0,z0=-10.0,z1=1.0,y1=10.0,v0=-1000.0,v1=1000.0,s0=0.0,s1=500.0,f0=0.0,f1=100.0,dv0=0.0,dv1=0.0,R0=0.0,R1=100.0,r0=0.0,r1=100.0)
+function filter_clouds(clouds,rect::Vector{Dict{String, Float64}};neg=false,x0=-10.0,x1=10.0,y0=-10.0,z0=-10.0,z1=10.0,y1=10.0,v0=-1500.0,v1=1500.0,s0=0.0,s1=500.0,f0=0.0,f1=100.0,dv0=-1000.0,dv1=1000.0,R0=0.0,R1=100.0,r0=0.0,r1=100.0)
 
-    @info "Filtering clouds"
     mask=clouds.Xp .>1000.0
     maskc=clouds.Xc .>1000.0
 
+	@info "Filtering $(sum(.!mask)) clouds"
     for rd in rect
+		@info "Applying mask $(rd)"
         x0i = haskey(rd,"x0") ? rd["x0"] : x0
         x1i = haskey(rd,"x1") ? rd["x1"] : x1
 
@@ -453,22 +454,28 @@ function filter_clouds(clouds,rect::Vector{Dict{String, Float64}};neg=false,x0=-
         f1i = haskey(rd,"f1") ? rd["f1"] : f1
 
 		mask_rec= ((clouds.Xp .>x0i) .&& (clouds.Xp .<x1i)) .&& ((clouds.Fp .>f0i) .&& (clouds.Fp .<f1i)) .&& ((clouds.Yp .>y0i) .&& (clouds.Yp .<y1i)) .&& ((clouds.Vp .>v0i) .&& (clouds.Vp .<v1i)) .&& ((clouds.Sp .>s0i) .&& (clouds.Sp .<s1i)) 
+		#@show sum(mask_rec)
 		if length(clouds.r)>0
             dv0i = haskey(rd,"dv0") ? rd["dv0"] : dv0
 			dv1i = haskey(rd,"dv1") ? rd["dv1"] : dv1
             mask_rec=mask_rec .&& ((clouds.dV .>dv0i) .&& (clouds.dV .<dv1i) )  .&& ((clouds.VC .>vc0i) .&& (clouds.VC .<vc1i)) .&& ((clouds.R .>R0i) .&& (clouds.R .<R1i)) .&& ((clouds.r .>r0i) .&& (clouds.r .<r1i)) .&& ((clouds.Z .>z0i) .&& (clouds.Z .<z1i))
+			#@show sum(mask_rec)
         end
-		mask =mask .|| mask_rec
 
-		mask_rec= ((clouds.Xc .>x0i) .&& (clouds.Xc .<x1i)) .&& ((clouds.Fc .>f0i) .&& (clouds.Fc .<f1i)) .&& ((clouds.Yc .>y0i) .&& (clouds.Yc .<y1i)) .&& ((clouds.Vc .>v0i) .&& (clouds.Vc .<v1i)) .&& ((clouds.Sc .>s0i) .&& (clouds.Sc .<s1i)) 
+		@info "$(sum(mask_rec)) cloudlets in mask"
+		mask =mask .|| (mask_rec)
+		#@show sum(mask)
 
-        maskc=maskc .|| mask_rec
-        
+		# mask_rec= ((clouds.Xc .>x0i) .&& (clouds.Xc .<x1i)) .&& ((clouds.Fc .>f0i) .&& (clouds.Fc .<f1i)) .&& ((clouds.Yc .>y0i) .&& (clouds.Yc .<y1i)) .&& ((clouds.Vc .>v0i) .&& (clouds.Vc .<v1i)) .&& ((clouds.Sc .>s0i) .&& (clouds.Sc .<s1i)) 
+
+		# maskc=maskc .|| (.!mask_rec)
     end
 	if neg
 		mask=.! mask
+		@show sum(mask)
 		maskc=.! maskc
 	end
+	
     @info "Found $(sum(mask)) unique sub-clouds and $(sum(maskc)) merged clouds"
 
     if length(clouds.r)>0 && length(clouds.ϕ)>0
@@ -479,3 +486,4 @@ function filter_clouds(clouds,rect::Vector{Dict{String, Float64}};neg=false,x0=-
         return GalaxyWarp.Clouds(Xp=clouds.Xp[mask],Yp=clouds.Yp[mask],Vp=clouds.Vp[mask],Fp=clouds.Fp[mask],Sp=clouds.Sp[mask],Ip=clouds.Ip[mask],logs=merge(clouds.logs,Dict{String, Any}("filtered"=>true)))
     end
 end
+#
