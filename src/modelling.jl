@@ -186,7 +186,7 @@ function logprior(P,priors)::Float64
 	return ps
 end
 
-function cloud_properties(x::Float64,y::Float64,v::Float64,disks::GalaxyWarp.Disks,dR::Float64;τ=nothing,dvi_min=300.0)::NTuple{8, Float64}
+function cloud_properties(x::Float64,y::Float64,v::Float64,disks::Disks,dR::Float64;τ=nothing,dvi_min=300.0)::NTuple{8, Float64}
 	dvc=dvi_min
 	
 	zd=NaN
@@ -239,7 +239,7 @@ function cloud_properties(x::Float64,y::Float64,v::Float64,disks::GalaxyWarp.Dis
 	end
 end
 
-function cloud_geometry!(clouds::GalaxyWarp.Clouds,disks::GalaxyWarp.Disks,P;dV0=300.0,τ=nothing)#::Geometry
+function cloud_geometry!(clouds::Clouds,disks::Disks,P;dV0=300.0,τ=nothing)#::Geometry
 
     X=clouds.Xp
     Y=clouds.Yp
